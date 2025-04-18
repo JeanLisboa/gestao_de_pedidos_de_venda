@@ -48,6 +48,7 @@ load_dotenv()  # Carrega as variáveis do ..env
 senha = os.getenv("senha")
 login = os.getenv('login')
 
+
 pd.set_option('display.max_rows', None)  # Exibe todas as linhas
 pd.set_option('display.width', None)  # Não limita a largura do terminal
 pd.set_option('display.max_colwidth', None)  # Não limita a largura das colunas
