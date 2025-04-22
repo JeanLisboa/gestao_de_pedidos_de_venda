@@ -47,7 +47,7 @@ import threading
 load_dotenv()  # Carrega as variáveis do ..env
 senha = os.getenv("senha")
 login = os.getenv('login')
-
+URL = os.getenv('URL')
 
 pd.set_option('display.max_rows', None)  # Exibe todas as linhas
 pd.set_option('display.width', None)  # Não limita a largura do terminal
@@ -68,7 +68,7 @@ def acessa_intranet(dist):
     print('Função acessa_intranet')
     # print(senha, login)
     # Acessa a intranet
-    navegador.get('http://45.236.77.106:51230/intranet/login.php')
+    navegador.get(URL)
 
     navegador.find_element('xpath', '/html/body/form/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]/input').clear()
     navegador.find_element('xpath', '/html/body/form/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]/input').send_keys(
