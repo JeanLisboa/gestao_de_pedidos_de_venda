@@ -136,12 +136,9 @@ def lista_codigos():
             saldo = saldo.replace(' ', '')
             saldo = saldo.replace('.', '')
             logging.debug(f'\nAnálise linha {tr} | Código: {codigo} | Saldo: {saldo} |')
-            valor_pedido = ''
             navegador.find_element('xpath', f'/html/body/form[2]/table[3]/tbody/tr[{tr}]/td[1]/a/img').click()
             navegador.implicitly_wait(60)
             lista_interna(codigo, saldo)
-            # fecha lupa
-            # input('> CLIQUE PARA FECHAR')
             navegador.implicitly_wait(60)
             navegador.find_element('xpath', f'/html/body/form[2]/table[3]/tbody/tr[{tr}]/td[1]/a/img').click()
             tr += 2
