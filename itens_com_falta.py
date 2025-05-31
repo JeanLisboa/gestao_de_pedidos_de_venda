@@ -31,7 +31,6 @@ Features:
 
 """
 
-
 from flask import Flask
 import pandas as pd
 from selenium import webdriver
@@ -44,6 +43,16 @@ from tkinter import ttk, messagebox
 from dotenv import load_dotenv
 import os
 import threading
+from pathlib import Path
+import logging
+logging.basicConfig(level=logging.DEBUG, format=' %(asctime)s - %(levelname)s - %(message)s')
+logging.debug('Iniciando a aplicacao')
+# logging.disable(logging.CRITICAL)  # comente para habilitar
+# logging.disable(logging.WARNING)  # comente para habilitar
+# logging.disable(logging.INFO)  # comente para habilitar
+# logging.disable(logging.DEBUG)  # comente para habilitar
+
+
 load_dotenv()  # Carrega as variáveis do ..env
 senha = os.getenv("senha")
 login = os.getenv('login')
@@ -62,17 +71,34 @@ navegador = webdriver.Chrome(options=options)
 navegador.minimize_window()
 options.add_argument("--headless=new")
 
+lista_geral = []
+lista_saldo = []
+lista_saldo_temp = []
+
+# logging.disable(logging.info)
+
+def criar_diretorio():
+    logging.debug('Função criar_diretorio')
+    caminho_0 = Path(r'C:\relato')
+    caminho_0.mkdir(parents=True, exist_ok=True) # cria o diretorio, se ele nao existir
+    logging.info('Cria o diretorio relato, se ele nao existir')
+
+    caminho_1 = Path(r'C:\relato\cod_sem_estoque')
+    caminho_1.mkdir(parents=True, exist_ok=True) # cria o diretorio, se ele nao existir
+    logging.info('Cria o diretorio cod_sem_estoque, se ele nao existir')
+
+    caminho_2 = Path(r'C:\relato\cod_sem_estoque\backup')
+    caminho_2.mkdir(parents=True, exist_ok=True) # cria o diretorio, se ele nao existir
+    logging.info('Cria o diretorio backup, se ele nao existir')
 
 
 def acessa_intranet(dist):
-    print('Função acessa_intranet')
-    # print(senha, login)
-    # Acessa a intranet
+    logging.debug('Função acessa_intranet')
     navegador.get(URL)
-
     navegador.find_element('xpath', '/html/body/form/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]/input').clear()
     navegador.find_element('xpath', '/html/body/form/table/tbody/tr[2]/td/table/tbody/tr[2]/td[2]/input').send_keys(
         login)
+
     sleep(2)
     navegador.find_element('xpath', '/html/body/form/table/tbody/tr[2]/td/table/tbody/tr[3]/td[2]/input').send_keys(
         senha, Keys.ENTER)
@@ -94,55 +120,41 @@ def acessa_intranet(dist):
         navegador.find_element('xpath', '/html/body/form[2]/table[1]/tbody/tr[2]/td[1]/select/option[2]').click()
 
     # processa
-
     navegador.find_element('xpath', '/html/body/form[2]/table[2]/tbody/tr/td[1]/input').click()
-    print('Abrindo tabela de códigos sem estoque')
-    # input('CLIQUE QUANDO FINALIZAR O CARREGAMENTO DAS INFORMAÇÕES >>>')
-    # while navegador.implicitly_wait(300) is False:
-    #     print('█', end='')
-
-    #  tabela
-    # navegador.find_element('xpath', '/html/body/form[2]/table[3]')
-    #  tbody
-    # navegador.find_element('xpath', '/html/body/form[2]/table[3]')
-
-
-lista_geral = []
-lista_saldo = []
-lista_saldo_temp = []
-
+    logging.info('Abrindo tabela de códigos sem estoque')
+    messagebox.showinfo('Processo Iniciado', 'Clique após o carregamento das informações')
 
 def lista_codigos():
-    print('\nFunçao lista_codigo')
+    logging.debug('\nFunçao lista_codigo')
     # teste clique
     navegador.find_element('xpath', '/html/body/form[2]/table[3]/tbody/tr[1]/th[1]').click()
     tr = 2
     while True:
-        # print('█', end='')
         try:
             codigo = navegador.find_element('xpath', f'/html/body/form[2]/table[3]/tbody/tr[{tr}]/td[3]').text
             saldo = navegador.find_element('xpath', f'/html/body/form[2]/table[3]/tbody/tr[{tr}]/td[9]').text
             saldo = saldo.replace(' ', '')
             saldo = saldo.replace('.', '')
-            print(f'\nAnálise linha {tr} | Código: {codigo} | Saldo: {saldo} | ', end='')
+            logging.debug(f'\nAnálise linha {tr} | Código: {codigo} | Saldo: {saldo} |')
             valor_pedido = ''
             navegador.find_element('xpath', f'/html/body/form[2]/table[3]/tbody/tr[{tr}]/td[1]/a/img').click()
-            navegador.implicitly_wait(10)
+            navegador.implicitly_wait(60)
             lista_interna(codigo, saldo)
             # fecha lupa
             # input('> CLIQUE PARA FECHAR')
-            navegador.implicitly_wait(10)
+            navegador.implicitly_wait(60)
             navegador.find_element('xpath', f'/html/body/form[2]/table[3]/tbody/tr[{tr}]/td[1]/a/img').click()
             tr += 2
+
         except:
-            print('\nFim da lista')
+            logging.warning('\n(Except) Fim da lista')
             lista_geral.extend(lista_interna(codigo, saldo))
             for i in lista_geral:
-                print(i)
+                logging.info(f'{i}')
             break
 
-
 def lista_interna(codigo,saldo):
+    logging.debug('\nFunçao lista_interna')
     tr = 3
     while True:
         navegador.implicitly_wait(10)
@@ -155,22 +167,19 @@ def lista_interna(codigo,saldo):
             qt_n_liberado = navegador.find_element('xpath', f'//*[@id="cpo{codigo}"]/table/tbody/tr/td/table[1]/tbody/tr[{tr}]/td[10]').text
             qt_n_liberado = qt_n_liberado.replace('.', '')
             qt_n_liberado = qt_n_liberado.replace(' ', '')
-
             qt_n_liberado = float(qt_n_liberado)
             qt_n_liberado = int(qt_n_liberado)
-            # qt_n_liberado = navegador.find_element('xpath', f'//*[@id="cpo{codigo}"]/table/tbody/tr/td/table[1]/tbody/tr[{tr}]/td[10]').
-
             lista_temp = (codigo, saldo, pedido, vendedor, dta_emi, nome_fant, qt_n_liberado)
-            # print(f'pedido: {pedido} | saldo: {saldo} | vendedor: {vendedor} | dta_emi: {dta_emi} | nome_fant: {nome_fant} | qt_n_liberado: {qt_n_liberado}')
             lista_geral.append(lista_temp[:])
             tr += 1
+
         except:
-            # print('Fim da lista de pedidos')
+            logging.warning('\n(Except) Fim da lista')
             break
     return lista_geral
 
 def relatorio_pedidos():
-    print('função relatorio_pedidos')
+    logging.debug('função relatorio_pedidos')
     while True:
         navegador.implicitly_wait(10)
         print('█', end='')
@@ -179,12 +188,12 @@ def relatorio_pedidos():
         except:
             pass
 
-
 def converte_dataframe(lista_geral, dist):
+    logging.debug('\nFunção converte_dataframe')
     dist = dist
-    print(f'função converte_dataframe | Dist: {dist}')
+    logging.debug(f'Dist: {dist}')
     df = pd.DataFrame(lista_geral, columns=['codigo', 'saldo', 'pedido', 'vendedor', 'dta_emi', 'nome fantasia', 'Quantidade'])
-    # print(df)
+
     df['Quantidade'] = pd.to_numeric(df['Quantidade'])  # Convertendo a coluna 'Quantidade' para inteiro
     df['saldo'] = pd.to_numeric(df['saldo'])  # Convertendo a coluna 'Quantidade' para inteiro
 
@@ -200,7 +209,7 @@ def converte_dataframe(lista_geral, dist):
 
 
 def salva_arquivo(df_pivot, df_auxiliar, dist):
-    print('função salva_arquivo')
+    logging.debug('função salva_arquivo')
     # Obtém a data e hora atual no formato desejado (ano-mês-dia_hora-minuto-segundo)
     # data_hora_atual = datetime.now().strftime('%Y-%m-%d_%H-%M-%S')
     data_hora_atual = datetime.now().strftime('%Y-%m-%d_%H_%M')
@@ -214,7 +223,7 @@ def salva_arquivo(df_pivot, df_auxiliar, dist):
     lista_geral.clear()
 
     df_auxiliar.to_excel(f'C:/relato/cod_sem_estoque/lista_saldo_itens_indisponiveis_{dist}.xlsx', index=False)
-# dist = input('Digite Extrema(1) | Alhandra (2): ')
+
 
 
 class Frame:
@@ -224,7 +233,7 @@ class Frame:
 
         style = ttk.Style()
         style.theme_use('alt')  # Usa um tema moderno
-        style.configure('TLabelFrame', background='#f0f0f0', borderwidth=0)
+        style.configure('TLabelFrame',  borderwidth=0)
         style.configure('TButton', background='#0078D7', foreground='white')
         style.configure('TProgressbar', thickness=10)
 
@@ -233,11 +242,9 @@ class Frame:
         self.botao_confirma = botao_confirma
         # configuração do frame
         self.label_frame_um = ttk.LabelFrame(master)  # frame (borda) 1 instanciando frame 'master'
-        self.label_frame_um.config(relief=GROOVE, text='Distribuidora', padding=(20, 10))
+        self.label_frame_um.config(relief=GROOVE,  text='Distribuidora', padding=(20, 10))
         self.label_frame_um.config(width=500, height=300)  # define o tamanho
         self.label_frame_um.pack(fill=BOTH, expand=False)
-
-
         self.opcao_radio_button = StringVar()
         self.botao_confirma = StringVar()
 
@@ -261,66 +268,67 @@ class Frame:
         #  objetos do frame_dois
         self.label_frame_dois = ttk.LabelFrame(master)  # frame (borda) 1 instanciando frame 'master'
 
-        ttk.Label(self.label_frame_dois, text='Desenvolvido por Jean Lino V_4_1', font=('arial', 9, "italic")).grid(
+        ttk.Label(self.label_frame_dois, text='Desenvolvido por Jean Lino Versão 4.1', font=('arial', 9, "italic")).grid(
             row=4, column=0, sticky='sw')
 
         self.label_frame_dois.pack(fill=BOTH, expand=False)
 
     def retorno_radio_button(self):
-        print('def retorno_radio_button')
+        logging.debug('def retorno_radio_button')
         a =self.opcao_radio_button.get()  # instancia o objeto, que retornará  valor do objeto
         if a == '1':
-            print('opção_1 selecionada')
+            logging.info('opção_1 selecionada')
         if a == '2':
-            print('opção_2 selecionada')
+            logging.info('opção_2 selecionada')
         return a
 
     def iniciar_thread(self):
+        logging.debug('iniciar_thread')
         threading.Thread(target=self.retorno_botao_confirma, daemon=True).start()
 
     def retorno_botao_confirma(self):
-        print('def retorno_botao_confirma')
+        logging.debug('def retorno_botao_confirma')
+
         dist = self.retorno_radio_button()
         if dist != '1' and dist != '2':
             messagebox.showerror('Erro', 'Selecione uma opção')
         else:
             try:
-                self.progress['value'] = 25
+                self.progress['value'] = 15
+                self.label_frame_um.update_idletasks()
+                criar_diretorio()
+
+                self.progress['value'] = 30
                 self.label_frame_um.update_idletasks()
 
                 acessa_intranet(dist)
                 self.label_frame_um.update_idletasks()
-                self.progress['value'] = 50
+                self.progress['value'] = 45
 
                 lista_codigos()
+                self.progress['value'] = 60
+                self.label_frame_um.update_idletasks()
+
+                df_pivot, df_resumido, dist = converte_dataframe(lista_geral, dist)
+                salva_arquivo(df_pivot, df_resumido, dist)
                 self.progress['value'] = 75
                 self.label_frame_um.update_idletasks()
 
                 self.progress['value'] = 100
-                self.label_frame_um.update_idletasks()
-                df_pivot, df_resumido, dist = converte_dataframe(lista_geral, dist)
-                salva_arquivo(df_pivot, df_resumido, dist)
-
-                # navegador.close()
-                messagebox.showinfo('Processo Concluído', 'Arquivo salvo em: C:\relato\cod_sem_estoque')
+                navegador.close()
+                messagebox.showinfo('Processo Concluído', 'Arquivo salvo em: C:\\relato\\cod_sem_estoque')
             except Exception as e:
-                print(e)
+                logging.error(e)
                 messagebox.showerror('Erro', f'Ocorreu um erro: {str(e)}')
 
 
 def main():
-    print('def main')
+    logging.debug('def main')
     root = Tk()
     root.config(border=(20))
     frame = Frame(root, opcao_radio_button=StringVar(), botao_confirma=StringVar())
     root.mainloop()
-
+    
 
 if __name__ == '__main__': main()
-
-#  zerar a lista antes iniciar os processos
-# na primeira linha deveria constar 1000, mas está constando 1
-
-# incluir coluna preço
-# incluir coluna saldo
 
